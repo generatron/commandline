@@ -1,0 +1,40 @@
+{
+  "name": "generatron",
+  "version": "0.1.0",
+  "description": "CLI for www.generatron.com source code generators",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Evol Johnson",
+  "license": "ISC",
+  "preferGlobal": true,
+  "bin": {
+    "gtron": "index.js"
+  },
+  "keywords": [
+    "codegeneration",
+    "ruby",
+    "on",
+    "rails",
+    "grails",
+    "sailsj",
+    "angular",
+    "javascript",
+    "scaffolding",
+    "ios",
+    "android",
+    "yeoman",
+    "cobol"
+  ],
+  "dependencies": {
+    "fs": "0.0.2",
+    "git-config": "0.0.7",
+    "mkdirp": "^0.5.1",
+    "open": "0.0.5",
+    "osenv": "^0.1.3",
+    "path": "^0.11.14",
+    "prompt": "^0.2.14",
+    "request": "^2.57.0",
+    "request-json": "^0.5.3"
+  }
+}
