@@ -1,11 +1,12 @@
 {
   "name": "generatron",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "description": "CLI for www.generatron.com source code generators",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Evol Johnson",
+  "repository": "https://github.com/generatron/commandline.git",
   "license": "ISC",
   "preferGlobal": true,
   "bin": {
@@ -13,9 +14,8 @@
   },
   "keywords": [
     "codegeneration",
-    "ruby",
-    "on",
-    "rails",
+    "ruby on rails",
+    "java",
     "grails",
     "sailsj",
     "angular",
@@ -23,6 +23,7 @@
     "scaffolding",
     "ios",
     "android",
+    "swift",
     "yeoman",
     "cobol"
   ],
@@ -35,6 +36,7 @@
     "path": "^0.11.14",
     "prompt": "^0.2.14",
     "request": "^2.57.0",
-    "request-json": "^0.5.3"
+    "request-json": "^0.5.3",
+    "sshpk": "^1.6.2"
   }
 }
