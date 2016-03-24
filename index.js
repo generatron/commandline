@@ -1,28 +1,17 @@
 #! /usr/bin/env node
 
 var userArgs = process.argv.slice(2);
-
 var searchPattern = userArgs[0];
-
-//console.log(userArgs)
-// var exec = require('child_process').exec;
-// var child = exec('git config user.name', function(err, stdout, stderr) {
-//   var username = stdout;
-//   console.log(username)
-// });
-
-
-//var gitConfig = require('git-config');
-//var config = gitConfig.sync();
-//var config = {};
-
-
 var fs = require('fs');
 var osenv = require('osenv');
 var path = require('path');
 var request = require('request-json');
 var configdir = osenv.home() + "/.generatron/"
 
+if(!fileExists(configdir + 'config.json')){
+    saveConfig({})
+    return;
+}
 
 var deleteFolderRecursive = function(path) {
     if (fs.existsSync(path)) {
@@ -38,10 +27,13 @@ var deleteFolderRecursive = function(path) {
     }
 };
 
+function getUserHome() {
+  return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+}
+
 function fileExists(filePath) {
     try {
         var p = path.resolve(filePath);
-        //console.log(p);
         var stats = fs.statSync(p);
         return stats.isFile() || stats.isDirectory();
     } catch (err) {
@@ -52,19 +44,14 @@ function fileExists(filePath) {
 function saveConfig(config) {
     var fs = require('fs');
     if (!fileExists(configdir + 'config.json')) {
-        
-        var config = {}
         config.baseurl = "https://www.generatron.com/GeneratronEngine/"
-
         var mkdirp = require('mkdirp');
-
         mkdirp(configdir, function(err) {
             if (err) {
                 console.error(err)
             } else {
                 fs.writeFile(configdir + 'config.json', JSON.stringify(config), function(err) {
                     if (err) return console.log(err);
-                    console.log('Stored configuration');
                 });
             }
 
@@ -73,8 +60,11 @@ function saveConfig(config) {
 
     } else {
         fs.writeFile(configdir + 'config.json', JSON.stringify(config), function(err) {
-            if (err) return console.log(err);
-            console.log('Stored configuration');
+            if (err){
+                console.log("Could not save configuration");
+                console.log(err);
+            }
+            //console.log('Stored configuration');
         });
     }
 
@@ -83,7 +73,8 @@ function saveConfig(config) {
 
 if (userArgs[0] == 'logout') {
     deleteFolderRecursive(configdir)
-    console.log("removed configuration");
+    //console.log("removed configuration");
+    saveConfig({});
     return;
 }
 
@@ -91,6 +82,7 @@ if (userArgs[0] == 'dev') {
     var fs = require('fs');
     var config = JSON.parse(fs.readFileSync(configdir + 'config.json', 'utf8'));
     config.baseurl = 'http://localhost:8090/GeneratronEngine/'
+    //console.log(config);
     saveConfig(config);
 
     return;
@@ -100,24 +92,39 @@ if (userArgs[0] == 'prod') {
     var fs = require('fs');
     var config = JSON.parse(fs.readFileSync(configdir + 'config.json', 'utf8'));
     config.baseurl = 'https://www.generatron.com/GeneratronEngine/'
+    //console.log(config);
     saveConfig(config);
     return
 }
 
 if (userArgs[0] == 'signup') {
+    var defaultName = ""
+    var defaultEmail = ""
+
+    if(fileExists(getUserHome()+'/.gitconfig')){
+        var fs = require('fs'), ini = require('ini')
+        var gitconfig = ini.parse(fs.readFileSync(getUserHome()+'/.gitconfig', 'utf-8'))
+        if(gitconfig.user.name){
+            defaultName = gitconfig.user.name
+        }
+
+        if(gitconfig.user.email){
+            defaultEmail = gitconfig.user.email
+        }
+    }
+
     var schema = {
         properties: {
             name: {
                 pattern: /^[a-zA-Z\s\-]+$/,
                 message: 'Name must be only letters, spaces, or dashes',
+                default: defaultName,
                 required: true
             },
             email: {
                 pattern: /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
                 message: 'Emails must be a valid email',
-                required: true
-            },
-            twitter: {
+                default: defaultEmail,
                 required: true
             },
             password: {
@@ -147,9 +154,8 @@ if (userArgs[0] == 'signup') {
             var client = request.createClient(config.baseurl);
 
             client.post('account/register', result, function(err, res, body) {
-                //console.log(body)
-                if (err) {
-                    console.log(err);
+                if (err && res.statusCode != 200) {
+                    console.log(body)
                     return;
                 }
                 body.baseurl = config.baseurl
@@ -163,11 +169,25 @@ if (userArgs[0] == 'signup') {
 
 
 if (userArgs[0] == 'login') {
+    var defaultName = ""
+    var defaultEmail = ""
+    if(fileExists(getUserHome()+'/.gitconfig')){
+        var fs = require('fs'), ini = require('ini')
+        var gitconfig = ini.parse(fs.readFileSync(getUserHome()+'/.gitconfig', 'utf-8'))
+        if(gitconfig.user.name){
+            defaultName = gitconfig.user.name
+        }
+
+        if(gitconfig.user.email){
+            defaultEmail = gitconfig.user.email
+        }
+    }
     var schema = {
         properties: {
             email: {
                 pattern: /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
                 message: 'Emails must be a valid email',
+                default: defaultEmail,
                 required: true
             },
             password: {
@@ -193,16 +213,13 @@ if (userArgs[0] == 'login') {
             var fs = require('fs');
             var config = JSON.parse(fs.readFileSync(configdir + 'config.json', 'utf8'));
             var client = request.createClient(config.baseurl);
-
             client.post('account/loginRemote', result, function(err, res, body) {
-                //console.log(body)
-                if (err) {
-                    console.log(err);
+                if (err && res.statusCode != 200) {
+                    console.log(body)
                     return;
                 }
                 body.baseurl = config.baseurl
                 saveConfig(body);
-
             });
         }
 
